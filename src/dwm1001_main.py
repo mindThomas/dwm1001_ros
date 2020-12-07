@@ -25,10 +25,7 @@ from localizer_dwm1001.srv         import Anchor_0
 rospy.init_node('Localizer_DWM1001', anonymous=False)
 
 # allow serial port to be detected by user
-os.popen("sudo chmod 777 /dev/ttyACM0", "w")
-
-# initialize ros rate 10hz
-rate = rospy.Rate(1)
+#os.popen("sudo chmod 777 /dev/ttyACM0", "w")
 
 serialReadLine = ""
 # For dynamic configuration
@@ -68,7 +65,7 @@ class dwm1001_localizer:
         # close the serial port in case the previous run didn't closed it properly
         serialPortDWM1001.close()
         # sleep for one sec
-        time.sleep(1)
+        rospy.sleep(1)
         # open serial port
         serialPortDWM1001.open()
 
@@ -78,7 +75,7 @@ class dwm1001_localizer:
             # start sending commands to the board so we can initialize the board
             self.initializeDWM1001API()
             # give some time to DWM1001 to wake up
-            time.sleep(2)
+            rospy.sleep(2)
             # send command lec, so we can get positions is CSV format
             serialPortDWM1001.write(DWM1001_API_COMMANDS.LEC)
             serialPortDWM1001.write(DWM1001_API_COMMANDS.SINGLE_ENTER)
@@ -93,7 +90,7 @@ class dwm1001_localizer:
                 serialReadLine = serialPortDWM1001.read_until()
 
                 try:
-                    self.pubblishCoordinatesIntoTopics(self.splitByComma(serialReadLine))
+                    self.publishCoordinatesIntoTopics(self.splitByComma(serialReadLine))
 
                 except IndexError:
                     rospy.loginfo("Found index error in the network array!DO SOMETHING!")
@@ -110,7 +107,7 @@ class dwm1001_localizer:
             # serialPortDWM1001.reset_input_buffer()
             serialPortDWM1001.write(DWM1001_API_COMMANDS.RESET)
             serialPortDWM1001.write(DWM1001_API_COMMANDS.SINGLE_ENTER)
-            rate.sleep()
+            rospy.sleep(1)
             if "reset" in serialReadLine:
                 rospy.loginfo("succesfully closed ")
                 serialPortDWM1001.close()
@@ -129,7 +126,7 @@ class dwm1001_localizer:
 
         return arrayFromUSBFormatted
 
-    def pubblishCoordinatesIntoTopics(self, networkDataArray):
+    def publishCoordinatesIntoTopics(self, networkDataArray):
         """
         Publish anchors and tag in topics using Tag and Anchor Object
 
@@ -157,7 +154,7 @@ class dwm1001_localizer:
                 # example /dwm1001/anchor0, the last digit is taken from AN0 and so on
                 pub_anchor = rospy.Publisher('/dwm1001/anchor'+str(temp_anchor_number[-1]), Anchor, queue_size=1)
                 pub_anchor.publish(anchor)
-                rospy.loginfo("Anchor: "
+                rospy.logdebug("Anchor: "
                               + str(anchor.id)
                               + " x: "
                               + str(anchor.x)
@@ -177,7 +174,7 @@ class dwm1001_localizer:
                 pub_anchor = rospy.Publisher('/dwm1001/tag', Tag, queue_size=1)
                 pub_anchor.publish(tag)
 
-                rospy.loginfo("Tag: "
+                rospy.logdebug("Tag: "
                               + " x: "
                               + str(tag.x)
                               + " y: "
@@ -237,10 +234,10 @@ class dwm1001_localizer:
         # send ENTER two times in order to access api
         serialPortDWM1001.write(DWM1001_API_COMMANDS.SINGLE_ENTER)
         # sleep for half a second
-        time.sleep(0.5)
+        rospy.sleep(0.5)
         serialPortDWM1001.write(DWM1001_API_COMMANDS.SINGLE_ENTER)
         # sleep for half second
-        time.sleep(0.5)
+        rospy.sleep(0.5)
         # send a third one - just in case
         serialPortDWM1001.write(DWM1001_API_COMMANDS.SINGLE_ENTER)
 
